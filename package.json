@@ -1,0 +1,27 @@
+{
+  "name": "ipfs-pinbot",
+  "version": "1.0.0",
+  "description": "IPFS Pin bot for Twitter",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/insanity54/ipfs-pinbot.git"
+  },
+  "author": "Chris Grimmett <chris@grimtech.net>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/insanity54/ipfs-pinbot/issues"
+  },
+  "homepage": "https://github.com/insanity54/ipfs-pinbot#readme",
+  "dependencies": {
+    "chai": "^3.5.0",
+    "foreman": "^1.4.1",
+    "ipfs-api": "^3.0.0",
+    "is-ipfs": "^0.2.0",
+    "twitter": "^1.2.5",
+    "underscore": "^1.8.3"
+  }
+}

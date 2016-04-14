@@ -1,0 +1,8 @@
+---
+
+- src: insanity54.ipfs
+  name: ipfs
+- src: insanity54.bootstrap
+  name: bootstrap
+# - src: insanity54.pinbot
+#   name: pinbot
