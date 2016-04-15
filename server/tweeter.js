@@ -40,26 +40,43 @@ client.stream('statuses/filter', {track: 'ipfsninja'}, function(stream) {
         ipfs.getHashes(tweet.text, function(err, hashes) {
             if (err) throw err;
             if (!hashes) {
-                console.log('didnt get valid multihash');
-                return reply(tweet.id, tweet.user.screen_name, 'you did not send me any valid multihash!');
-            }
-            // pin all the hashes!
-            var z=0;
-            for (var i=0; i<hashes.length; i++) {
-                z+=1;
-                ipfs.pin(hashes[i], function(err, res) {
-                    if (err) throw err;
-                    z-=1;
-                    if (z==0) {
-                        console.log('pinned '+hashes.length+' hashes.');
-                        reply(tweet.id, tweet.user.screen_name, 'I pinned '+hashes.length+' hashes with my shuriken!');
-                    }
-                });
+                console.log('didnt get any multihash');
+                return reply(tweet.id_str, tweet.user.screen_name, "you didn't send me any multihashes!");
             }
             
+            // validate hashes
+            ipfs.validateHashes(hashes, function(err, hashes) {
+                if (err) {
+                    console.log('invalid hash');
+                    return reply(tweet.id_str, tweet.usr.screen_name, err.invalid+" is an invalid mutlihash!");
+                }
+                
+                // pin all the hashes!
+                var c=0;
+                var msg=[];
+                var pinned=0;
+                for (var i=0; i<hashes.length; i++) {
+                    c+=1;
+                    reply(tweet.id_str, tweet.user.screen_name, "recursive pin of "+hashes[i]+" in progress! I will try for 15 mins.");
+                    console.log('pinning '+i+' of '+hashes.length+' -- '+hashes[i]);
+                    ipfs.pin(hashes[i], function(err, numPins) {
+                        if (err) {
+                            console.log(err);
+                            msg.push(err);
+                        }
+                        else pinned+=1;
+                        //console.log('pin seems fine! --'+res);
+                        c-=1;
+                        if (c==0) {
+                            if (pinned) msg.push(pinned+' pinned hashes with my shuriken!.')
+                            if (!pinned) msg.push('I failed!');
+                            console.log(msg.join('/'));
+                            reply(tweet.id_str, tweet.user.screen_name, msg.join('/'));
+                        }
+                    });
+                }
+            });
         });
-        
-
       }
   });
  
@@ -100,5 +117,6 @@ var reply = function(id, to, text) {
     client.post('statuses/update', updateOpts, function(err, tweet, response){
         if (err) throw err;
         console.log('tweet sent-- '+tweet.text);
+        //console.log(tweet);
     });
 };

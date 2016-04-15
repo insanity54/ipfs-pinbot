@@ -1,5 +1,6 @@
 var isIPFS = require('is-ipfs');
 var ipfsAPI = require('ipfs-api');
+var _ = require('underscore');
 
 var ipfs = ipfsAPI('localhost', '5001', {protocol: 'http'});
 
@@ -15,13 +16,17 @@ var ipfs = ipfsAPI('localhost', '5001', {protocol: 'http'});
  * @param {onGotHashesCallback} cb
  */
 var getHashes = function getHashes(string, cb) {
-    var matches = /Qm[A-Za-z0-9]{44}/.exec(string);
-    if (matches) {
+    var hashRe = /Qm[A-Za-z0-9]{44}/g;
+
+    var hashes = [];
+    var match = [];
+    while ((match = hashRe.exec(string)) !== null) {
         // looks like an ipfs multihash
-        if (isIPFS.multihash(matches)) return cb(null, matches); // is an ipfs multihash
-        else return cb(null, null); // looked like a multihash, but was not valid
+        hashes.push(match[0]); // is an ipfs multihash
     }
-    else return cb(null, null);
+    
+    //console.log(hashes);
+    return cb(null, hashes);
 };
 /**
  * @callback {onGotHashesCallback}
@@ -30,16 +35,63 @@ var getHashes = function getHashes(string, cb) {
  */
 
 
+
+
+/**
+ * validateHashes
+ * 
+ * calls back with array of valid hashes
+ * calls back with error if any hash is invalid
+ * 
+ * @param {array} hashes 
+ * @param {onValidatedHashesCallback} cb
+ */
+var validateHashes = function validateHashes(hashes, cb) {
+    var invalid = _.find(hashes, function(hash) {
+        return (!isIPFS.multihash(hash));
+    });
+    if (invalid)
+        return cb({invalid: invalid, msg: "invalid hash was found"}, null);
+    return cb(null, hashes);
+};
+/**
+ * @callback {onValidatedHashesCallback}
+ * @param {object} err
+ * @param {string} err.invalid - the invalid hash
+ * @param {string} err.msg - error message
+ * @param {array} validHashes
+ */
+ 
+ 
+ 
+
+ 
+
+
+/**
+ * pin
+ * 
+ * pin a multihash
+ * 
+ * @param {string} multihash
+ * @param {onPinnedCallback} cb
+ */
 var pin = function pin(multihash, cb) {
-    ipfs.add(multihash, {recursive: true}, function (err, res) {
-       if (err) throw err;
-       console.log(res);
-       return cb(null, res);
+    ipfs.pin.add(multihash, {recursive: true, timeout: '15m'}, function (err, res) {
+       if (err) return cb(err, 0);
+       var numPins = res.Pins.length || 0;
+       return cb(null, numPins);
     });
 };
+/**
+ * @callback {onPinnedCallback}
+ * @param {error} err
+ * @param {number} numPins - number of pins that succeeded in pinning
+ */
 
 
 module.exports = {
     getHashes: getHashes,
-    pin: pin
+    pin: pin,
+    validateHashes: validateHashes
 };
